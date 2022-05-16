@@ -38,15 +38,10 @@ import org.apache.ibatis.reflection.SystemMetaObject;
  * @author Clinton Begin
  */
 public class CacheBuilder {
-  private final String id;
+  private CacheBuilderProduct cacheBuilderProduct = new CacheBuilderProduct();
+private final String id;
   private Class<? extends Cache> implementation;
   private final List<Class<? extends Cache>> decorators;
-  private Integer size;
-  private Long clearInterval;
-  private boolean readWrite;
-  private Properties properties;
-  private boolean blocking;
-
   public CacheBuilder(String id) {
     this.id = id;
     this.decorators = new ArrayList<>();
@@ -65,41 +60,36 @@ public class CacheBuilder {
   }
 
   public CacheBuilder size(Integer size) {
-    this.size = size;
-    return this;
+    return cacheBuilderProduct.size(size, this);
   }
 
   public CacheBuilder clearInterval(Long clearInterval) {
-    this.clearInterval = clearInterval;
-    return this;
+    return cacheBuilderProduct.clearInterval(clearInterval, this);
   }
 
   public CacheBuilder readWrite(boolean readWrite) {
-    this.readWrite = readWrite;
-    return this;
+    return cacheBuilderProduct.readWrite(readWrite, this);
   }
 
   public CacheBuilder blocking(boolean blocking) {
-    this.blocking = blocking;
-    return this;
+    return cacheBuilderProduct.blocking(blocking, this);
   }
 
   public CacheBuilder properties(Properties properties) {
-    this.properties = properties;
-    return this;
+    return cacheBuilderProduct.properties(properties, this);
   }
 
   public Cache build() {
     setDefaultImplementations();
     Cache cache = newBaseCacheInstance(implementation, id);
-    setCacheProperties(cache);
+    cacheBuilderProduct.setCacheProperties(cache);
     // issue #352, do not apply decorators to custom caches
     if (PerpetualCache.class.equals(cache.getClass())) {
       for (Class<? extends Cache> decorator : decorators) {
         cache = newCacheDecoratorInstance(decorator, cache);
-        setCacheProperties(cache);
+        cacheBuilderProduct.setCacheProperties(cache);
       }
-      cache = setStandardDecorators(cache);
+      cache = cacheBuilderProduct.setStandardDecorators(cache);
     } else if (!LoggingCache.class.isAssignableFrom(cache.getClass())) {
       cache = new LoggingCache(cache);
     }
@@ -111,77 +101,6 @@ public class CacheBuilder {
       implementation = PerpetualCache.class;
       if (decorators.isEmpty()) {
         decorators.add(LruCache.class);
-      }
-    }
-  }
-
-  private Cache setStandardDecorators(Cache cache) {
-    try {
-      MetaObject metaCache = SystemMetaObject.forObject(cache);
-      if (size != null && metaCache.hasSetter("size")) {
-        metaCache.setValue("size", size);
-      }
-      if (clearInterval != null) {
-        cache = new ScheduledCache(cache);
-        ((ScheduledCache) cache).setClearInterval(clearInterval);
-      }
-      if (readWrite) {
-        cache = new SerializedCache(cache);
-      }
-      cache = new LoggingCache(cache);
-      cache = new SynchronizedCache(cache);
-      if (blocking) {
-        cache = new BlockingCache(cache);
-      }
-      return cache;
-    } catch (Exception e) {
-      throw new CacheException("Error building standard cache decorators.  Cause: " + e, e);
-    }
-  }
-
-  private void setCacheProperties(Cache cache) {
-    if (properties != null) {
-      MetaObject metaCache = SystemMetaObject.forObject(cache);
-      for (Map.Entry<Object, Object> entry : properties.entrySet()) {
-        String name = (String) entry.getKey();
-        String value = (String) entry.getValue();
-        if (metaCache.hasSetter(name)) {
-          Class<?> type = metaCache.getSetterType(name);
-          if (String.class == type) {
-            metaCache.setValue(name, value);
-          } else if (int.class == type
-              || Integer.class == type) {
-            metaCache.setValue(name, Integer.valueOf(value));
-          } else if (long.class == type
-              || Long.class == type) {
-            metaCache.setValue(name, Long.valueOf(value));
-          } else if (short.class == type
-              || Short.class == type) {
-            metaCache.setValue(name, Short.valueOf(value));
-          } else if (byte.class == type
-              || Byte.class == type) {
-            metaCache.setValue(name, Byte.valueOf(value));
-          } else if (float.class == type
-              || Float.class == type) {
-            metaCache.setValue(name, Float.valueOf(value));
-          } else if (boolean.class == type
-              || Boolean.class == type) {
-            metaCache.setValue(name, Boolean.valueOf(value));
-          } else if (double.class == type
-              || Double.class == type) {
-            metaCache.setValue(name, Double.valueOf(value));
-          } else {
-            throw new CacheException("Unsupported property type for cache: '" + name + "' of type " + type);
-          }
-        }
-      }
-    }
-    if (InitializingObject.class.isAssignableFrom(cache.getClass())) {
-      try {
-        ((InitializingObject) cache).initialize();
-      } catch (Exception e) {
-        throw new CacheException("Failed cache initialization for '"
-          + cache.getId() + "' on '" + cache.getClass().getName() + "'", e);
       }
     }
   }

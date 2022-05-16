@@ -33,9 +33,9 @@ import org.apache.ibatis.session.RowBounds;
 
 public class ParamNameResolver {
 
-  public static final String GENERIC_NAME_PREFIX = "param";
+  private ParamNameResolverProduct paramNameResolverProduct;
 
-  private final boolean useActualParamName;
+public static final String GENERIC_NAME_PREFIX = "param";
 
   /**
    * <p>
@@ -52,11 +52,9 @@ public class ParamNameResolver {
    */
   private final SortedMap<Integer, String> names;
 
-  private boolean hasParamAnnotation;
-
   public ParamNameResolver(Configuration config, Method method) {
-    this.useActualParamName = config.isUseActualParamName();
-    final Class<?>[] paramTypes = method.getParameterTypes();
+    this.paramNameResolverProduct = new ParamNameResolverProduct(config.isUseActualParamName());
+	final Class<?>[] paramTypes = method.getParameterTypes();
     final Annotation[][] paramAnnotations = method.getParameterAnnotations();
     final SortedMap<Integer, String> map = new TreeMap<>();
     int paramCount = paramAnnotations.length;
@@ -69,14 +67,14 @@ public class ParamNameResolver {
       String name = null;
       for (Annotation annotation : paramAnnotations[paramIndex]) {
         if (annotation instanceof Param) {
-          hasParamAnnotation = true;
+          paramNameResolverProduct.setHasParamAnnotation(true);
           name = ((Param) annotation).value();
           break;
         }
       }
       if (name == null) {
         // @Param was not specified.
-        if (useActualParamName) {
+        if (paramNameResolverProduct.getUseActualParamName()) {
           name = getActualParamName(method, paramIndex);
         }
         if (name == null) {
@@ -120,27 +118,7 @@ public class ParamNameResolver {
    * @return the named params
    */
   public Object getNamedParams(Object[] args) {
-    final int paramCount = names.size();
-    if (args == null || paramCount == 0) {
-      return null;
-    } else if (!hasParamAnnotation && paramCount == 1) {
-      Object value = args[names.firstKey()];
-      return wrapToMapIfCollection(value, useActualParamName ? names.get(0) : null);
-    } else {
-      final Map<String, Object> param = new ParamMap<>();
-      int i = 0;
-      for (Map.Entry<Integer, String> entry : names.entrySet()) {
-        param.put(entry.getValue(), args[entry.getKey()]);
-        // add generic param names (param1, param2, ...)
-        final String genericParamName = GENERIC_NAME_PREFIX + (i + 1);
-        // ensure not to overwrite parameter named with @Param
-        if (!names.containsValue(genericParamName)) {
-          param.put(genericParamName, args[entry.getKey()]);
-        }
-        i++;
-      }
-      return param;
-    }
+    return paramNameResolverProduct.getNamedParams(args, this.names);
   }
 
   /**

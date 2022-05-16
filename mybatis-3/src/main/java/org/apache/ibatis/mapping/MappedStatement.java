@@ -189,12 +189,7 @@ public final class MappedStatement {
     }
 
     public MappedStatement build() {
-      assert mappedStatement.configuration != null;
-      assert mappedStatement.id != null;
-      assert mappedStatement.sqlSource != null;
-      assert mappedStatement.lang != null;
-      mappedStatement.resultMaps = Collections.unmodifiableList(mappedStatement.resultMaps);
-      return mappedStatement;
+      return mappedStatement.build();
     }
   }
 
@@ -329,5 +324,14 @@ public final class MappedStatement {
       return in.split(",");
     }
   }
+
+public MappedStatement build() {
+	assert this.configuration != null;
+	assert this.id != null;
+	assert this.sqlSource != null;
+	assert this.lang != null;
+	this.resultMaps = Collections.unmodifiableList(this.resultMaps);
+	return this;
+}
 
 }

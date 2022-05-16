@@ -31,12 +31,12 @@ import org.apache.ibatis.reflection.property.PropertyTokenizer;
  */
 public class MetaClass {
 
-  private final ReflectorFactory reflectorFactory;
-  private final Reflector reflector;
+  private MetaClassProduct metaClassProduct;
+private final Reflector reflector;
 
   private MetaClass(Class<?> type, ReflectorFactory reflectorFactory) {
-    this.reflectorFactory = reflectorFactory;
-    this.reflector = reflectorFactory.findForClass(type);
+    this.metaClassProduct = new MetaClassProduct(reflectorFactory);
+	this.reflector = reflectorFactory.findForClass(type);
   }
 
   public static MetaClass forClass(Class<?> type, ReflectorFactory reflectorFactory) {
@@ -44,12 +44,11 @@ public class MetaClass {
   }
 
   public MetaClass metaClassForProperty(String name) {
-    Class<?> propType = reflector.getGetterType(name);
-    return MetaClass.forClass(propType, reflectorFactory);
+    return metaClassProduct.metaClassForProperty(name, this.reflector);
   }
 
   public String findProperty(String name) {
-    StringBuilder prop = buildProperty(name, new StringBuilder());
+    StringBuilder prop = metaClassProduct.buildProperty(name, new StringBuilder(), this.reflector);
     return prop.length() > 0 ? prop.toString() : null;
   }
 
@@ -69,31 +68,14 @@ public class MetaClass {
   }
 
   public Class<?> getSetterType(String name) {
-    PropertyTokenizer prop = new PropertyTokenizer(name);
-    if (prop.hasNext()) {
-      MetaClass metaProp = metaClassForProperty(prop.getName());
-      return metaProp.getSetterType(prop.getChildren());
-    } else {
-      return reflector.getSetterType(prop.getName());
-    }
+    return metaClassProduct.getSetterType(name, this.reflector);
   }
 
   public Class<?> getGetterType(String name) {
-    PropertyTokenizer prop = new PropertyTokenizer(name);
-    if (prop.hasNext()) {
-      MetaClass metaProp = metaClassForProperty(prop);
-      return metaProp.getGetterType(prop.getChildren());
-    }
-    // issue #506. Resolve the type inside a Collection Object
-    return getGetterType(prop);
+    return metaClassProduct.getGetterType(name, this);
   }
 
-  private MetaClass metaClassForProperty(PropertyTokenizer prop) {
-    Class<?> propType = getGetterType(prop);
-    return MetaClass.forClass(propType, reflectorFactory);
-  }
-
-  private Class<?> getGetterType(PropertyTokenizer prop) {
+  public Class<?> getGetterType(PropertyTokenizer prop) {
     Class<?> type = reflector.getGetterType(prop.getName());
     if (prop.getIndex() != null && Collection.class.isAssignableFrom(type)) {
       Type returnType = getGenericGetterType(prop.getName());
@@ -133,31 +115,11 @@ public class MetaClass {
   }
 
   public boolean hasSetter(String name) {
-    PropertyTokenizer prop = new PropertyTokenizer(name);
-    if (prop.hasNext()) {
-      if (reflector.hasSetter(prop.getName())) {
-        MetaClass metaProp = metaClassForProperty(prop.getName());
-        return metaProp.hasSetter(prop.getChildren());
-      } else {
-        return false;
-      }
-    } else {
-      return reflector.hasSetter(prop.getName());
-    }
+    return metaClassProduct.hasSetter(name, this.reflector);
   }
 
   public boolean hasGetter(String name) {
-    PropertyTokenizer prop = new PropertyTokenizer(name);
-    if (prop.hasNext()) {
-      if (reflector.hasGetter(prop.getName())) {
-        MetaClass metaProp = metaClassForProperty(prop);
-        return metaProp.hasGetter(prop.getChildren());
-      } else {
-        return false;
-      }
-    } else {
-      return reflector.hasGetter(prop.getName());
-    }
+    return metaClassProduct.hasGetter(name, this.reflector, this);
   }
 
   public Invoker getGetInvoker(String name) {
@@ -168,23 +130,8 @@ public class MetaClass {
     return reflector.getSetInvoker(name);
   }
 
-  private StringBuilder buildProperty(String name, StringBuilder builder) {
-    PropertyTokenizer prop = new PropertyTokenizer(name);
-    if (prop.hasNext()) {
-      String propertyName = reflector.findPropertyName(prop.getName());
-      if (propertyName != null) {
-        builder.append(propertyName);
-        builder.append(".");
-        MetaClass metaProp = metaClassForProperty(propertyName);
-        metaProp.buildProperty(prop.getChildren(), builder);
-      }
-    } else {
-      String propertyName = reflector.findPropertyName(name);
-      if (propertyName != null) {
-        builder.append(propertyName);
-      }
-    }
-    return builder;
+  public StringBuilder buildProperty(String name, StringBuilder builder) {
+    return metaClassProduct.buildProperty(name, builder, this.reflector);
   }
 
   public boolean hasDefaultConstructor() {

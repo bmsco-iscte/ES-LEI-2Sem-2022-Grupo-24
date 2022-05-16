@@ -65,13 +65,19 @@ public class JdbcTransaction implements Transaction {
 
   @Override
   public void commit() throws SQLException {
-    if (connection != null && !connection.getAutoCommit()) {
-      if (log.isDebugEnabled()) {
-        log.debug("Committing JDBC Connection [" + connection + "]");
-      }
+    log();
+	if (connection != null && !connection.getAutoCommit()) {
       connection.commit();
     }
   }
+
+private void log() throws SQLException {
+	if (connection != null && !connection.getAutoCommit()) {
+		if (log.isDebugEnabled()) {
+			log.debug("Committing JDBC Connection [" + connection + "]");
+		}
+	}
+}
 
   @Override
   public void rollback() throws SQLException {
@@ -86,13 +92,17 @@ public class JdbcTransaction implements Transaction {
   @Override
   public void close() throws SQLException {
     if (connection != null) {
-      resetAutoCommit();
-      if (log.isDebugEnabled()) {
-        log.debug("Closing JDBC Connection [" + connection + "]");
-      }
-      connection.close();
+      log1();
+	connection.close();
     }
   }
+
+private void log1() {
+	resetAutoCommit();
+	if (log.isDebugEnabled()) {
+		log.debug("Closing JDBC Connection [" + connection + "]");
+	}
+}
 
   protected void setDesiredAutoCommit(boolean desiredAutoCommit) {
     try {

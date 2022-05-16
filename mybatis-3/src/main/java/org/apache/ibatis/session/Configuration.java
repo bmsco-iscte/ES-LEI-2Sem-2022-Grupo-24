@@ -100,7 +100,19 @@ import org.apache.ibatis.type.TypeHandlerRegistry;
  */
 public class Configuration {
 
-  protected Environment environment;
+  private ConfigurationProduct6 configurationProduct6 = new ConfigurationProduct6();
+
+private ConfigurationProduct5 configurationProduct5 = new ConfigurationProduct5();
+
+private ConfigurationProduct4 configurationProduct4 = new ConfigurationProduct4();
+
+private ConfigurationProduct3 configurationProduct3 = new ConfigurationProduct3();
+
+private ConfigurationProduct2 configurationProduct2 = new ConfigurationProduct2();
+
+private ConfigurationProduct configurationProduct = new ConfigurationProduct();
+
+protected Environment environment;
 
   protected boolean safeRowBoundsEnabled;
   protected boolean safeResultHandlerEnabled = true;
@@ -151,24 +163,10 @@ public class Configuration {
   protected final InterceptorChain interceptorChain = new InterceptorChain();
   protected final TypeHandlerRegistry typeHandlerRegistry = new TypeHandlerRegistry(this);
   protected final TypeAliasRegistry typeAliasRegistry = new TypeAliasRegistry();
-  protected final LanguageDriverRegistry languageRegistry = new LanguageDriverRegistry();
-
-  protected final Map<String, MappedStatement> mappedStatements = new StrictMap<MappedStatement>("Mapped Statements collection")
-      .conflictMessageProducer((savedValue, targetValue) ->
-          ". please check " + savedValue.getResource() + " and " + targetValue.getResource());
-  protected final Map<String, Cache> caches = new StrictMap<>("Caches collection");
-  protected final Map<String, ResultMap> resultMaps = new StrictMap<>("Result Maps collection");
-  protected final Map<String, ParameterMap> parameterMaps = new StrictMap<>("Parameter Maps collection");
-  protected final Map<String, KeyGenerator> keyGenerators = new StrictMap<>("Key Generators collection");
-
   protected final Set<String> loadedResources = new HashSet<>();
   protected final Map<String, XNode> sqlFragments = new StrictMap<>("XML fragments parsed from previous mappers");
 
-  protected final Collection<XMLStatementBuilder> incompleteStatements = new LinkedList<>();
-  protected final Collection<CacheRefResolver> incompleteCacheRefs = new LinkedList<>();
   protected final Collection<ResultMapResolver> incompleteResultMaps = new LinkedList<>();
-  protected final Collection<MethodResolver> incompleteMethods = new LinkedList<>();
-
   /*
    * A map holds cache-ref relationship. The key is the namespace that
    * references a cache bound to another namespace and the value is the
@@ -211,8 +209,8 @@ public class Configuration {
     typeAliasRegistry.registerAlias("CGLIB", CglibProxyFactory.class);
     typeAliasRegistry.registerAlias("JAVASSIST", JavassistProxyFactory.class);
 
-    languageRegistry.setDefaultDriverClass(XMLLanguageDriver.class);
-    languageRegistry.register(RawLanguageDriver.class);
+    configurationProduct5.getLanguageRegistry().setDefaultDriverClass(XMLLanguageDriver.class);
+    configurationProduct5.getLanguageRegistry().register(RawLanguageDriver.class);
   }
 
   public String getLogPrefix() {
@@ -619,18 +617,15 @@ public class Configuration {
   }
 
   public LanguageDriverRegistry getLanguageRegistry() {
-    return languageRegistry;
+    return configurationProduct5.getLanguageRegistry();
   }
 
   public void setDefaultScriptingLanguage(Class<? extends LanguageDriver> driver) {
-    if (driver == null) {
-      driver = XMLLanguageDriver.class;
-    }
-    getLanguageRegistry().setDefaultDriverClass(driver);
+    configurationProduct5.setDefaultScriptingLanguage(driver);
   }
 
   public LanguageDriver getDefaultScriptingLanguageInstance() {
-    return languageRegistry.getDefaultDriver();
+    return configurationProduct5.getLanguageRegistry().getDefaultDriver();
   }
 
   /**
@@ -642,11 +637,7 @@ public class Configuration {
    * @since 3.5.1
    */
   public LanguageDriver getLanguageDriver(Class<? extends LanguageDriver> langClass) {
-    if (langClass == null) {
-      return languageRegistry.getDefaultDriver();
-    }
-    languageRegistry.register(langClass);
-    return languageRegistry.getDriver(langClass);
+    return configurationProduct5.getLanguageDriver(langClass);
   }
 
   /**
@@ -706,115 +697,111 @@ public class Configuration {
   }
 
   public void addKeyGenerator(String id, KeyGenerator keyGenerator) {
-    keyGenerators.put(id, keyGenerator);
+    configurationProduct3.addKeyGenerator(id, keyGenerator);
   }
 
   public Collection<String> getKeyGeneratorNames() {
-    return keyGenerators.keySet();
+    return configurationProduct3.getKeyGeneratorNames();
   }
 
   public Collection<KeyGenerator> getKeyGenerators() {
-    return keyGenerators.values();
+    return configurationProduct3.getKeyGenerators();
   }
 
   public KeyGenerator getKeyGenerator(String id) {
-    return keyGenerators.get(id);
+    return configurationProduct3.getKeyGenerator(id);
   }
 
   public boolean hasKeyGenerator(String id) {
-    return keyGenerators.containsKey(id);
+    return configurationProduct3.hasKeyGenerator(id);
   }
 
   public void addCache(Cache cache) {
-    caches.put(cache.getId(), cache);
+    configurationProduct2.addCache(cache);
   }
 
   public Collection<String> getCacheNames() {
-    return caches.keySet();
+    return configurationProduct2.getCacheNames();
   }
 
   public Collection<Cache> getCaches() {
-    return caches.values();
+    return configurationProduct2.getCaches();
   }
 
   public Cache getCache(String id) {
-    return caches.get(id);
+    return configurationProduct2.getCache(id);
   }
 
   public boolean hasCache(String id) {
-    return caches.containsKey(id);
+    return configurationProduct2.hasCache(id);
   }
 
   public void addResultMap(ResultMap rm) {
-    resultMaps.put(rm.getId(), rm);
-    checkLocallyForDiscriminatedNestedResultMaps(rm);
-    checkGloballyForDiscriminatedNestedResultMaps(rm);
+    configurationProduct.addResultMap(rm);
   }
 
   public Collection<String> getResultMapNames() {
-    return resultMaps.keySet();
+    return configurationProduct.getResultMapNames();
   }
 
   public Collection<ResultMap> getResultMaps() {
-    return resultMaps.values();
+    return configurationProduct.getResultMaps();
   }
 
   public ResultMap getResultMap(String id) {
-    return resultMaps.get(id);
+    return configurationProduct.getResultMap(id);
   }
 
   public boolean hasResultMap(String id) {
-    return resultMaps.containsKey(id);
+    return configurationProduct.hasResultMap(id);
   }
 
   public void addParameterMap(ParameterMap pm) {
-    parameterMaps.put(pm.getId(), pm);
+    configurationProduct4.addParameterMap(pm);
   }
 
   public Collection<String> getParameterMapNames() {
-    return parameterMaps.keySet();
+    return configurationProduct4.getParameterMapNames();
   }
 
   public Collection<ParameterMap> getParameterMaps() {
-    return parameterMaps.values();
+    return configurationProduct4.getParameterMaps();
   }
 
   public ParameterMap getParameterMap(String id) {
-    return parameterMaps.get(id);
+    return configurationProduct4.getParameterMap(id);
   }
 
   public boolean hasParameterMap(String id) {
-    return parameterMaps.containsKey(id);
+    return configurationProduct4.hasParameterMap(id);
   }
 
   public void addMappedStatement(MappedStatement ms) {
-    mappedStatements.put(ms.getId(), ms);
+    configurationProduct6.addMappedStatement(ms);
   }
 
   public Collection<String> getMappedStatementNames() {
-    buildAllStatements();
-    return mappedStatements.keySet();
+    return configurationProduct6.getMappedStatementNames(this);
   }
 
   public Collection<MappedStatement> getMappedStatements() {
-    buildAllStatements();
-    return mappedStatements.values();
+    return configurationProduct6.getMappedStatements(this);
   }
 
   public Collection<XMLStatementBuilder> getIncompleteStatements() {
-    return incompleteStatements;
+    return configurationProduct6.getIncompleteStatements();
   }
 
   public void addIncompleteStatement(XMLStatementBuilder incompleteStatement) {
-    incompleteStatements.add(incompleteStatement);
+    configurationProduct6.getIncompleteStatements().add(incompleteStatement);
   }
 
   public Collection<CacheRefResolver> getIncompleteCacheRefs() {
-    return incompleteCacheRefs;
+    return configurationProduct6.getIncompleteCacheRefs();
   }
 
   public void addIncompleteCacheRef(CacheRefResolver incompleteCacheRef) {
-    incompleteCacheRefs.add(incompleteCacheRef);
+    configurationProduct6.getIncompleteCacheRefs().add(incompleteCacheRef);
   }
 
   public Collection<ResultMapResolver> getIncompleteResultMaps() {
@@ -826,22 +813,19 @@ public class Configuration {
   }
 
   public void addIncompleteMethod(MethodResolver builder) {
-    incompleteMethods.add(builder);
+    configurationProduct6.getIncompleteMethods().add(builder);
   }
 
   public Collection<MethodResolver> getIncompleteMethods() {
-    return incompleteMethods;
+    return configurationProduct6.getIncompleteMethods();
   }
 
   public MappedStatement getMappedStatement(String id) {
-    return this.getMappedStatement(id, true);
+    return configurationProduct6.getMappedStatement(id, true, this);
   }
 
   public MappedStatement getMappedStatement(String id, boolean validateIncompleteStatements) {
-    if (validateIncompleteStatements) {
-      buildAllStatements();
-    }
-    return mappedStatements.get(id);
+    return configurationProduct6.getMappedStatement(id, validateIncompleteStatements, this);
   }
 
   public Map<String, XNode> getSqlFragments() {
@@ -873,14 +857,11 @@ public class Configuration {
   }
 
   public boolean hasStatement(String statementName) {
-    return hasStatement(statementName, true);
+    return configurationProduct6.hasStatement(statementName, true, this);
   }
 
   public boolean hasStatement(String statementName, boolean validateIncompleteStatements) {
-    if (validateIncompleteStatements) {
-      buildAllStatements();
-    }
-    return mappedStatements.containsKey(statementName);
+    return configurationProduct6.hasStatement(statementName, validateIncompleteStatements, this);
   }
 
   public void addCacheRef(String namespace, String referencedNamespace) {
@@ -893,31 +874,10 @@ public class Configuration {
    * statement validation.
    */
   protected void buildAllStatements() {
-    parsePendingResultMaps();
-    if (!incompleteCacheRefs.isEmpty()) {
-      synchronized (incompleteCacheRefs) {
-        incompleteCacheRefs.removeIf(x -> x.resolveCacheRef() != null);
-      }
-    }
-    if (!incompleteStatements.isEmpty()) {
-      synchronized (incompleteStatements) {
-        incompleteStatements.removeIf(x -> {
-          x.parseStatementNode();
-          return true;
-        });
-      }
-    }
-    if (!incompleteMethods.isEmpty()) {
-      synchronized (incompleteMethods) {
-        incompleteMethods.removeIf(x -> {
-          x.resolve();
-          return true;
-        });
-      }
-    }
+    configurationProduct6.buildAllStatements(this);
   }
 
-  private void parsePendingResultMaps() {
+  public void parsePendingResultMaps() {
     if (incompleteResultMaps.isEmpty()) {
       return;
     }
@@ -958,36 +918,12 @@ public class Configuration {
 
   // Slow but a one time cost. A better solution is welcome.
   protected void checkGloballyForDiscriminatedNestedResultMaps(ResultMap rm) {
-    if (rm.hasNestedResultMaps()) {
-      for (Map.Entry<String, ResultMap> entry : resultMaps.entrySet()) {
-        Object value = entry.getValue();
-        if (value instanceof ResultMap) {
-          ResultMap entryResultMap = (ResultMap) value;
-          if (!entryResultMap.hasNestedResultMaps() && entryResultMap.getDiscriminator() != null) {
-            Collection<String> discriminatedResultMapNames = entryResultMap.getDiscriminator().getDiscriminatorMap().values();
-            if (discriminatedResultMapNames.contains(rm.getId())) {
-              entryResultMap.forceNestedResultMaps();
-            }
-          }
-        }
-      }
-    }
+    configurationProduct.checkGloballyForDiscriminatedNestedResultMaps(rm);
   }
 
   // Slow but a one time cost. A better solution is welcome.
   protected void checkLocallyForDiscriminatedNestedResultMaps(ResultMap rm) {
-    if (!rm.hasNestedResultMaps() && rm.getDiscriminator() != null) {
-      for (Map.Entry<String, String> entry : rm.getDiscriminator().getDiscriminatorMap().entrySet()) {
-        String discriminatedResultMapName = entry.getValue();
-        if (hasResultMap(discriminatedResultMapName)) {
-          ResultMap discriminatedResultMap = resultMaps.get(discriminatedResultMapName);
-          if (discriminatedResultMap.hasNestedResultMaps()) {
-            rm.forceNestedResultMaps();
-            break;
-          }
-        }
-      }
-    }
+    configurationProduct.checkLocallyForDiscriminatedNestedResultMaps(rm);
   }
 
   protected static class StrictMap<V> extends HashMap<String, V> {

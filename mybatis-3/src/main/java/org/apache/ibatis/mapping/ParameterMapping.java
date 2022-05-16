@@ -100,33 +100,9 @@ public class ParameterMapping {
     }
 
     public ParameterMapping build() {
-      resolveTypeHandler();
-      validate();
+      parameterMapping.resolveTypeHandler();
+      parameterMapping.validate();
       return parameterMapping;
-    }
-
-    private void validate() {
-      if (ResultSet.class.equals(parameterMapping.javaType)) {
-        if (parameterMapping.resultMapId == null) {
-          throw new IllegalStateException("Missing resultmap in property '"
-              + parameterMapping.property + "'.  "
-              + "Parameters of type java.sql.ResultSet require a resultmap.");
-        }
-      } else {
-        if (parameterMapping.typeHandler == null) {
-          throw new IllegalStateException("Type handler was null on parameter mapping for property '"
-            + parameterMapping.property + "'. It was either not specified and/or could not be found for the javaType ("
-            + parameterMapping.javaType.getName() + ") : jdbcType (" + parameterMapping.jdbcType + ") combination.");
-        }
-      }
-    }
-
-    private void resolveTypeHandler() {
-      if (parameterMapping.typeHandler == null && parameterMapping.javaType != null) {
-        Configuration configuration = parameterMapping.configuration;
-        TypeHandlerRegistry typeHandlerRegistry = configuration.getTypeHandlerRegistry();
-        parameterMapping.typeHandler = typeHandlerRegistry.getTypeHandler(parameterMapping.javaType, parameterMapping.jdbcType);
-      }
     }
 
   }
@@ -223,4 +199,27 @@ public class ParameterMapping {
     sb.append('}');
     return sb.toString();
   }
+
+public void validate() {
+	if (ResultSet.class.equals(this.javaType)) {
+		if (this.resultMapId == null) {
+			throw new IllegalStateException("Missing resultmap in property '" + this.property + "'.  "
+					+ "Parameters of type java.sql.ResultSet require a resultmap.");
+		}
+	} else {
+		if (this.typeHandler == null) {
+			throw new IllegalStateException("Type handler was null on parameter mapping for property '" + this.property
+					+ "'. It was either not specified and/or could not be found for the javaType ("
+					+ this.javaType.getName() + ") : jdbcType (" + this.jdbcType + ") combination.");
+		}
+	}
+}
+
+public void resolveTypeHandler() {
+	if (this.typeHandler == null && this.javaType != null) {
+		Configuration configuration = this.configuration;
+		TypeHandlerRegistry typeHandlerRegistry = configuration.getTypeHandlerRegistry();
+		this.typeHandler = typeHandlerRegistry.getTypeHandler(this.javaType, this.jdbcType);
+	}
+}
 }

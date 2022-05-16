@@ -114,21 +114,26 @@ public class TypeParameterResolver {
 
   private static ParameterizedType resolveParameterizedType(ParameterizedType parameterizedType, Type srcType, Class<?> declaringClass) {
     Class<?> rawType = (Class<?>) parameterizedType.getRawType();
-    Type[] typeArgs = parameterizedType.getActualTypeArguments();
-    Type[] args = new Type[typeArgs.length];
-    for (int i = 0; i < typeArgs.length; i++) {
-      if (typeArgs[i] instanceof TypeVariable) {
-        args[i] = resolveTypeVar((TypeVariable<?>) typeArgs[i], srcType, declaringClass);
-      } else if (typeArgs[i] instanceof ParameterizedType) {
-        args[i] = resolveParameterizedType((ParameterizedType) typeArgs[i], srcType, declaringClass);
-      } else if (typeArgs[i] instanceof WildcardType) {
-        args[i] = resolveWildcardType((WildcardType) typeArgs[i], srcType, declaringClass);
-      } else {
-        args[i] = typeArgs[i];
-      }
-    }
-    return new ParameterizedTypeImpl(rawType, null, args);
+    Type[] args = args(parameterizedType, srcType, declaringClass);
+	return new ParameterizedTypeImpl(rawType, null, args);
   }
+
+private static Type[] args(ParameterizedType parameterizedType, Type srcType, Class<?> declaringClass) {
+	Type[] typeArgs = parameterizedType.getActualTypeArguments();
+	Type[] args = new Type[typeArgs.length];
+	for (int i = 0; i < typeArgs.length; i++) {
+		if (typeArgs[i] instanceof TypeVariable) {
+			args[i] = resolveTypeVar((TypeVariable<?>) typeArgs[i], srcType, declaringClass);
+		} else if (typeArgs[i] instanceof ParameterizedType) {
+			args[i] = resolveParameterizedType((ParameterizedType) typeArgs[i], srcType, declaringClass);
+		} else if (typeArgs[i] instanceof WildcardType) {
+			args[i] = resolveWildcardType((WildcardType) typeArgs[i], srcType, declaringClass);
+		} else {
+			args[i] = typeArgs[i];
+		}
+	}
+	return args;
+}
 
   private static Type resolveWildcardType(WildcardType wildcardType, Type srcType, Class<?> declaringClass) {
     Type[] lowerBounds = resolveWildcardTypeBounds(wildcardType.getLowerBounds(), srcType, declaringClass);

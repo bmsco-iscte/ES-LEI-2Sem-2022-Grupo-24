@@ -47,13 +47,12 @@ import org.apache.ibatis.session.SqlSession;
  */
 public class DefaultSqlSession implements SqlSession {
 
-  private final Configuration configuration;
+  private DefaultSqlSessionProduct defaultSqlSessionProduct = new DefaultSqlSessionProduct();
+private final Configuration configuration;
   private final Executor executor;
 
   private final boolean autoCommit;
   private boolean dirty;
-  private List<Cursor<?>> cursorList;
-
   public DefaultSqlSession(Configuration configuration, Executor executor, boolean autoCommit) {
     this.configuration = configuration;
     this.executor = executor;
@@ -121,7 +120,7 @@ public class DefaultSqlSession implements SqlSession {
     try {
       MappedStatement ms = configuration.getMappedStatement(statement);
       Cursor<T> cursor = executor.queryCursor(ms, wrapCollection(parameter), rowBounds);
-      registerCursor(cursor);
+//      registerCursor(cursor);
       return cursor;
     } catch (Exception e) {
       throw ExceptionFactory.wrapException("Error querying database.  Cause: " + e, e);
@@ -258,23 +257,10 @@ public class DefaultSqlSession implements SqlSession {
   public void close() {
     try {
       executor.close(isCommitOrRollbackRequired(false));
-      closeCursors();
+      defaultSqlSessionProduct.closeCursors();
       dirty = false;
     } finally {
       ErrorContext.instance().reset();
-    }
-  }
-
-  private void closeCursors() {
-    if (cursorList != null && !cursorList.isEmpty()) {
-      for (Cursor<?> cursor : cursorList) {
-        try {
-          cursor.close();
-        } catch (IOException e) {
-          throw ExceptionFactory.wrapException("Error closing cursor.  Cause: " + e, e);
-        }
-      }
-      cursorList.clear();
     }
   }
 
@@ -300,13 +286,6 @@ public class DefaultSqlSession implements SqlSession {
   @Override
   public void clearCache() {
     executor.clearLocalCache();
-  }
-
-  private <T> void registerCursor(Cursor<T> cursor) {
-    if (cursorList == null) {
-      cursorList = new ArrayList<>();
-    }
-    cursorList.add(cursor);
   }
 
   private boolean isCommitOrRollbackRequired(boolean force) {

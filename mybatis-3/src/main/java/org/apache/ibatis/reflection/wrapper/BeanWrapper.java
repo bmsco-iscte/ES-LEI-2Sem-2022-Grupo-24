@@ -31,13 +31,13 @@ import org.apache.ibatis.reflection.property.PropertyTokenizer;
  */
 public class BeanWrapper extends BaseWrapper {
 
-  private final Object object;
-  private final MetaClass metaClass;
-
+  private BeanWrapperProduct beanWrapperProduct;
+private final Object object;
   public BeanWrapper(MetaObject metaObject, Object object) {
     super(metaObject);
     this.object = object;
-    this.metaClass = MetaClass.forClass(object.getClass(), metaObject.getReflectorFactory());
+	this.beanWrapperProduct = new BeanWrapperProduct(
+			MetaClass.forClass(object.getClass(), metaObject.getReflectorFactory()));
   }
 
   @Override
@@ -46,7 +46,7 @@ public class BeanWrapper extends BaseWrapper {
       Object collection = resolveCollection(prop, object);
       return getCollectionValue(prop, collection);
     } else {
-      return getBeanProperty(prop, object);
+      return beanWrapperProduct.getBeanProperty(prop, object);
     }
   }
 
@@ -56,23 +56,23 @@ public class BeanWrapper extends BaseWrapper {
       Object collection = resolveCollection(prop, object);
       setCollectionValue(prop, collection, value);
     } else {
-      setBeanProperty(prop, object, value);
+      beanWrapperProduct.setBeanProperty(prop, object, value);
     }
   }
 
   @Override
   public String findProperty(String name, boolean useCamelCaseMapping) {
-    return metaClass.findProperty(name, useCamelCaseMapping);
+    return beanWrapperProduct.getMetaClass().findProperty(name, useCamelCaseMapping);
   }
 
   @Override
   public String[] getGetterNames() {
-    return metaClass.getGetterNames();
+    return beanWrapperProduct.getMetaClass().getGetterNames();
   }
 
   @Override
   public String[] getSetterNames() {
-    return metaClass.getSetterNames();
+    return beanWrapperProduct.getMetaClass().getSetterNames();
   }
 
   @Override
@@ -81,12 +81,12 @@ public class BeanWrapper extends BaseWrapper {
     if (prop.hasNext()) {
       MetaObject metaValue = metaObject.metaObjectForProperty(prop.getIndexedName());
       if (metaValue == SystemMetaObject.NULL_META_OBJECT) {
-        return metaClass.getSetterType(name);
+        return beanWrapperProduct.getMetaClass().getSetterType(name);
       } else {
         return metaValue.getSetterType(prop.getChildren());
       }
     } else {
-      return metaClass.getSetterType(name);
+      return beanWrapperProduct.getMetaClass().getSetterType(name);
     }
   }
 
@@ -96,12 +96,12 @@ public class BeanWrapper extends BaseWrapper {
     if (prop.hasNext()) {
       MetaObject metaValue = metaObject.metaObjectForProperty(prop.getIndexedName());
       if (metaValue == SystemMetaObject.NULL_META_OBJECT) {
-        return metaClass.getGetterType(name);
+        return beanWrapperProduct.getMetaClass().getGetterType(name);
       } else {
         return metaValue.getGetterType(prop.getChildren());
       }
     } else {
-      return metaClass.getGetterType(name);
+      return beanWrapperProduct.getMetaClass().getGetterType(name);
     }
   }
 
@@ -109,10 +109,10 @@ public class BeanWrapper extends BaseWrapper {
   public boolean hasSetter(String name) {
     PropertyTokenizer prop = new PropertyTokenizer(name);
     if (prop.hasNext()) {
-      if (metaClass.hasSetter(prop.getIndexedName())) {
+      if (beanWrapperProduct.getMetaClass().hasSetter(prop.getIndexedName())) {
         MetaObject metaValue = metaObject.metaObjectForProperty(prop.getIndexedName());
         if (metaValue == SystemMetaObject.NULL_META_OBJECT) {
-          return metaClass.hasSetter(name);
+          return beanWrapperProduct.getMetaClass().hasSetter(name);
         } else {
           return metaValue.hasSetter(prop.getChildren());
         }
@@ -120,7 +120,7 @@ public class BeanWrapper extends BaseWrapper {
         return false;
       }
     } else {
-      return metaClass.hasSetter(name);
+      return beanWrapperProduct.getMetaClass().hasSetter(name);
     }
   }
 
@@ -128,10 +128,10 @@ public class BeanWrapper extends BaseWrapper {
   public boolean hasGetter(String name) {
     PropertyTokenizer prop = new PropertyTokenizer(name);
     if (prop.hasNext()) {
-      if (metaClass.hasGetter(prop.getIndexedName())) {
+      if (beanWrapperProduct.getMetaClass().hasGetter(prop.getIndexedName())) {
         MetaObject metaValue = metaObject.metaObjectForProperty(prop.getIndexedName());
         if (metaValue == SystemMetaObject.NULL_META_OBJECT) {
-          return metaClass.hasGetter(name);
+          return beanWrapperProduct.getMetaClass().hasGetter(name);
         } else {
           return metaValue.hasGetter(prop.getChildren());
         }
@@ -139,7 +139,7 @@ public class BeanWrapper extends BaseWrapper {
         return false;
       }
     } else {
-      return metaClass.hasGetter(name);
+      return beanWrapperProduct.getMetaClass().hasGetter(name);
     }
   }
 
@@ -155,35 +155,6 @@ public class BeanWrapper extends BaseWrapper {
       throw new ReflectionException("Cannot set value of property '" + name + "' because '" + name + "' is null and cannot be instantiated on instance of " + type.getName() + ". Cause:" + e.toString(), e);
     }
     return metaValue;
-  }
-
-  private Object getBeanProperty(PropertyTokenizer prop, Object object) {
-    try {
-      Invoker method = metaClass.getGetInvoker(prop.getName());
-      try {
-        return method.invoke(object, NO_ARGUMENTS);
-      } catch (Throwable t) {
-        throw ExceptionUtil.unwrapThrowable(t);
-      }
-    } catch (RuntimeException e) {
-      throw e;
-    } catch (Throwable t) {
-      throw new ReflectionException("Could not get property '" + prop.getName() + "' from " + object.getClass() + ".  Cause: " + t.toString(), t);
-    }
-  }
-
-  private void setBeanProperty(PropertyTokenizer prop, Object object, Object value) {
-    try {
-      Invoker method = metaClass.getSetInvoker(prop.getName());
-      Object[] params = {value};
-      try {
-        method.invoke(object, params);
-      } catch (Throwable t) {
-        throw ExceptionUtil.unwrapThrowable(t);
-      }
-    } catch (Throwable t) {
-      throw new ReflectionException("Could not set property '" + prop.getName() + "' of '" + object.getClass() + "' with value '" + value + "' Cause: " + t.toString(), t);
-    }
   }
 
   @Override
